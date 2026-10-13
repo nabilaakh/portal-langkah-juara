@@ -1,6 +1,7 @@
 import { seedDatabase } from '../src/lib/seedData.js';
+import { firebaseConfig } from '../src/lib/firebase.js';
 
-console.log('🌱 Starting Firestore seeding with initial demo data...');
+console.log(`🌱 Starting Firestore seeding to target project: [${firebaseConfig.projectId}] ...`);
 try {
   const result = await seedDatabase();
   console.log(`✅ Firestore seeding completed! Inserted/Updated ${result.seededCount} documents.`);

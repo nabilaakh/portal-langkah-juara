@@ -1,5 +1,18 @@
-import { db, firebaseConfig } from '../src/lib/firebase.js';
-import { collection, getDocs } from 'firebase/firestore';
+import fs from 'fs';
+import path from 'path';
+
+if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && fs.existsSync('.env.local')) {
+  const envContent = fs.readFileSync('.env.local', 'utf8');
+  envContent.split(/\r?\n/).forEach(line => {
+    const match = line.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      process.env[match[1].trim()] = match[2].trim();
+    }
+  });
+}
+
+const { db, firebaseConfig } = await import('../src/lib/firebase.js');
+const { collection, getDocs } = await import('firebase/firestore');
 
 console.log(`Checking Firestore collections in project: [${firebaseConfig.projectId}] ...\n`);
 

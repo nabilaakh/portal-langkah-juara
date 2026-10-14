@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getUsers } from "@/lib/firestoreService";
 import Button from "@/components/ui/Button";
-import { LogIn, ArrowRight, Mail, Lock, ShieldAlert, Sparkles } from "lucide-react";
+import { LogIn, ArrowRight, Mail, Lock, ShieldAlert } from "lucide-react";
 
 export default function MasukPage() {
   const router = useRouter();
@@ -71,39 +70,6 @@ export default function MasukPage() {
       setIsLoading(false);
     }
   };
-
-  // Masuk Cepat Demo (untuk kemudahan pengujian peran yang sudah di-seed)
-  const handleQuickDemoLogin = async (targetEmail) => {
-    setError("");
-    try {
-      setIsLoading(true);
-      const allUsers = await getUsers();
-      const matched = allUsers.find(
-        (u) => u.email?.toLowerCase() === targetEmail.toLowerCase()
-      );
-
-      if (matched) {
-        if (matched.aktif === false) {
-          setError("Akun ini dinonaktifkan.");
-          return;
-        }
-        redirectByRole(matched.role);
-      } else {
-        router.push("/beranda");
-      }
-    } catch (err) {
-      setError("Gagal masuk cepat: " + err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const quickLogins = [
-    { label: "Siswa (Raka)", email: "raka@siswa.id", role: "siswa" },
-    { label: "Tutor (Kak Dimas)", email: "dimas@langkahjuara.id", role: "tutor" },
-    { label: "Staf (Kak Fira)", email: "fira@langkahjuara.id", role: "staf" },
-    { label: "Admin (Pak Arif)", email: "arif@langkahjuara.id", role: "super_admin" },
-  ];
 
   return (
     <div className="max-w-md mx-auto py-8">
@@ -199,28 +165,7 @@ export default function MasukPage() {
           </Button>
         </form>
 
-        {/* Simulasi Masuk Cepat */}
-        <div className="mt-6 pt-5 border-t border-gray-100">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-textMuted mb-2.5">
-            <Sparkles className="w-3.5 h-3.5 text-juara" />
-            <span>Pilihan Masuk Cepat Peran (Demo):</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {quickLogins.map((ql) => (
-              <button
-                key={ql.email}
-                type="button"
-                onClick={() => handleQuickDemoLogin(ql.email)}
-                className="p-2 rounded-xl bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-juara/40 text-left transition-all cursor-pointer"
-              >
-                <div className="text-xs font-bold text-textMain truncate">{ql.label}</div>
-                <div className="text-[10px] text-textMuted truncate">{ql.email}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <p className="text-center text-xs text-textMuted mt-5">
+        <p className="text-center text-xs text-textMuted mt-6 pt-5 border-t border-gray-100">
           Belum punya akun?{" "}
           <Link href="/daftar" className="text-juara font-semibold hover:underline">
             Daftar siswa baru

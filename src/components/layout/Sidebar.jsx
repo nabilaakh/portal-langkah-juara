@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   GraduationCap,
   Home,
@@ -13,62 +14,95 @@ import {
   Users,
   Settings,
   Shield,
-  FileText,
   BarChart3,
   Layers,
   LogIn,
   UserPlus,
   Menu,
   X,
-  Sparkles,
 } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user, profile } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const menuGroups = [
-    {
-      group: "Siswa",
-      items: [
-        { label: "Beranda", href: "/beranda", icon: Home },
-        { label: "Program", href: "/program", icon: BookOpen },
-        { label: "Kelas Saya", href: "/kelas", icon: Calendar },
-      ],
-    },
-    {
-      group: "Staf",
-      items: [
-        { label: "Dasbor Staf", href: "/staf", icon: Layers },
-        { label: "Pendaftaran", href: "/staf/pendaftaran", icon: ClipboardList },
-        { label: "Kelola Kelas", href: "/staf/kelas", icon: Calendar },
-        { label: "Data Siswa", href: "/staf/siswa", icon: Users },
-      ],
-    },
-    {
-      group: "Tutor",
-      items: [
-        { label: "Dasbor Tutor", href: "/tutor", icon: GraduationCap },
-      ],
-    },
-    {
-      group: "Super Admin",
-      items: [
-        { label: "Dasbor Admin", href: "/admin", icon: Shield },
-        { label: "Kelola Pengguna", href: "/admin/pengguna", icon: Users },
-        { label: "Program (Admin)", href: "/admin/program", icon: Settings },
-        { label: "Laporan", href: "/admin/laporan", icon: BarChart3 },
-      ],
-    },
-    {
-      group: "Publik & Akun",
-      items: [
-        { label: "Profil", href: "/profil", icon: User },
-        { label: "Daftar Akun", href: "/daftar", icon: UserPlus },
-        { label: "Halaman Masuk", href: "/masuk", icon: LogIn },
-      ],
-    },
-  ];
+  const role = profile?.role || (user ? "siswa" : null);
+
+  // Buat menu terproteksi yang disesuaikan secara dinamis dengan peran pengguna
+  const getMenuGroups = () => {
+    if (!user) {
+      return [
+        {
+          group: "Autentikasi",
+          items: [
+            { label: "Halaman Masuk", href: "/masuk", icon: LogIn },
+            { label: "Daftar Siswa Baru", href: "/daftar", icon: UserPlus },
+          ],
+        },
+      ];
+    }
+
+    const groups = [];
+
+    // Menu Siswa
+    if (role === "siswa" || role === "super_admin") {
+      groups.push({
+        group: "Menu Siswa",
+        items: [
+          { label: "Beranda", href: "/beranda", icon: Home },
+          { label: "Program Bimbel", href: "/program", icon: BookOpen },
+          { label: "Kelas Saya", href: "/kelas", icon: Calendar },
+        ],
+      });
+    }
+
+    // Menu Staf
+    if (role === "staf" || role === "super_admin") {
+      groups.push({
+        group: "Operasional Staf",
+        items: [
+          { label: "Dasbor Staf", href: "/staf", icon: Layers },
+          { label: "Pendaftaran Siswa", href: "/staf/pendaftaran", icon: ClipboardList },
+          { label: "Kelola Kelas", href: "/staf/kelas", icon: Calendar },
+          { label: "Data Siswa", href: "/staf/siswa", icon: Users },
+        ],
+      });
+    }
+
+    // Menu Tutor
+    if (role === "tutor" || role === "super_admin") {
+      groups.push({
+        group: "Pengajaran Tutor",
+        items: [
+          { label: "Dasbor Tutor", href: "/tutor", icon: GraduationCap },
+        ],
+      });
+    }
+
+    // Menu Super Admin
+    if (role === "super_admin") {
+      groups.push({
+        group: "Super Admin",
+        items: [
+          { label: "Dasbor Pemilik", href: "/admin", icon: Shield },
+          { label: "Kelola Pengguna", href: "/admin/pengguna", icon: Users },
+          { label: "Program (Admin)", href: "/admin/program", icon: Settings },
+          { label: "Laporan Rekap", href: "/admin/laporan", icon: BarChart3 },
+        ],
+      });
+    }
+
+    // Menu Akun Pengguna
+    groups.push({
+      group: "Akun",
+      items: [{ label: "Profil Pengguna", href: "/profil", icon: User }],
+    });
+
+    return groups;
+  };
+
+  const menuGroups = getMenuGroups();
 
   const isActive = (href) => {
     if (href === "/beranda") return pathname === "/" || pathname === "/beranda";
@@ -81,7 +115,7 @@ export default function Sidebar() {
       <div className="lg:hidden fixed top-3 left-3 z-50">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2.5 rounded-xl bg-white border border-gray-200 shadow-md text-textMain hover:bg-gray-50 transition-colors"
+          className="p-2.5 rounded-xl bg-white border border-gray-200 shadow-md text-textMain hover:bg-gray-50 transition-colors cursor-pointer"
           aria-label="Toggle navigation"
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -151,19 +185,6 @@ export default function Sidebar() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Footer Info */}
-        <div className="p-3 border-t border-gray-100 bg-gray-50/50 shrink-0">
-          <div className="px-3 py-2 rounded-xl bg-white border border-gray-100 shadow-2xs">
-            <div className="flex items-center gap-2 text-xs font-semibold text-textMain">
-              <Sparkles className="w-3.5 h-3.5 text-juara" />
-              <span>Mode Uji & Demo</span>
-            </div>
-            <p className="text-[10px] text-textMuted mt-0.5">
-              Tanpa login & tanpa proteksi guard
-            </p>
-          </div>
         </div>
       </aside>
     </>

@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Database, CheckCircle2, User, RefreshCw, LogOut, LogIn } from "lucide-react";
-import { seedDatabase } from "@/lib/seedData";
+import { User, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, profile, logout } = useAuth();
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [seedSuccess, setSeedSuccess] = useState(false);
 
   const getPageTitle = (path) => {
     if (!path || path === "/" || path === "/beranda") return "Beranda Siswa";
@@ -36,22 +33,6 @@ export default function Topbar() {
     return "Portal Langkah Juara";
   };
 
-  const handleSeed = async () => {
-    try {
-      setIsSeeding(true);
-      await seedDatabase();
-      setSeedSuccess(true);
-      setTimeout(() => setSeedSuccess(false), 4000);
-      // Reload current page data
-      window.location.reload();
-    } catch (err) {
-      console.error("Gagal melakukan seeding data demo:", err);
-      alert("Gagal menginisialisasi data Firestore: " + err.message);
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
   return (
     <header className="h-16 border-b border-gray-200/80 bg-panel sticky top-0 z-30 px-4 lg:px-8 flex items-center justify-between shadow-2xs">
       <div className="flex items-center gap-3 pl-12 lg:pl-0">
@@ -66,29 +47,6 @@ export default function Topbar() {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Tombol Seeder Data Demo Firestore */}
-        <button
-          onClick={handleSeed}
-          disabled={isSeeding}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border shadow-xs ${
-            seedSuccess
-              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-              : "bg-white hover:bg-orange-50/50 text-juara border-juara/30 hover:border-juara"
-          }`}
-          title="Isi database Firestore dengan data contoh PRD (Raka, Salsa, Kak Fira, Kak Dimas, Pak Arif)"
-        >
-          {isSeeding ? (
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-          ) : seedSuccess ? (
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-          ) : (
-            <Database className="w-3.5 h-3.5" />
-          )}
-          <span className="hidden sm:inline">
-            {isSeeding ? "Mengisi Data..." : seedSuccess ? "Data Terisi!" : "Isi Data Demo"}
-          </span>
-        </button>
-
         {/* Profil Singkat & Status Auth (Dibaca langsung dari dokumen users/{uid}) */}
         {user || profile ? (
           <div className="flex items-center gap-2">

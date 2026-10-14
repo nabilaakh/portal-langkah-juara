@@ -9,9 +9,8 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
-import { getUsers } from "@/lib/firestoreService";
 
 const AuthContext = createContext({
   user: null,
@@ -67,41 +66,37 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper untuk mengambil profil dari Firestore
-  const fetchUserProfile = async (firebaseUser) => {
-    if (!firebaseUser) {
+  // Helper untuk memeriksa atau membuat dokumen users/{uid} di Firestore
+  // Aturan sesuai instruksi:
+  // 1. Cek dokumen users/{uid}.
+  // 2. Bila belum ada, buat dokumen users/{uid}.
+  // 3. Bila sudah ada, jangan diubah sama sekali.
+  // 4. Jangan simpan kata sandi di dokumen ini.
+  const ensureUserProfile = async (firebaseUser, initialNama = "") => {
+    if (!firebaseUser || !firebaseUser.uid) {
       setProfile(null);
       return null;
     }
 
     try {
-      // 1. Coba cari berdasarkan UID dokumen
       const userDocRef = doc(db, "users", firebaseUser.uid);
       const docSnap = await getDoc(userDocRef);
 
       if (docSnap.exists()) {
-        const data = { id: docSnap.id, ...docSnap.data() };
-        setProfile(data);
-        return data;
+        // Bila dokumen users/{uid} SUDAH ADA: Jangan diubah! Ambil data apa adanya.
+        const existingData = { id: docSnap.id, ...docSnap.data() };
+        setProfile(existingData);
+        return existingData;
       }
 
-      // 2. Jika tidak ada berdasarkan UID, cari berdasarkan email (cocok dengan akun seed)
-      if (firebaseUser.email) {
-        const allUsers = await getUsers();
-        const matchedUser = allUsers.find(
-          (u) => u.email?.toLowerCase() === firebaseUser.email.toLowerCase()
-        );
+      // Bila dokumen users/{uid} BELUM ADA: Buat dokumen baru tanpa menyimpan kata sandi.
+      const fallbackNama =
+        initialNama ||
+        firebaseUser.displayName ||
+        (firebaseUser.email ? firebaseUser.email.split("@")[0] : "Pengguna Baru");
 
-        if (matchedUser) {
-          // Sinkronkan UID dokumen jika perlu atau simpan matched user
-          setProfile(matchedUser);
-          return matchedUser;
-        }
-      }
-
-      // 3. Jika benar-benar baru (misal Google login pertama kali), buatkan profil siswa
       const newProfileData = {
-        nama: firebaseUser.displayName || "Siswa Baru",
+        nama: fallbackNama,
         email: firebaseUser.email || "",
         role: "siswa",
         aktif: true,
@@ -115,7 +110,7 @@ export function AuthProvider({ children }) {
       setProfile(createdProfile);
       return createdProfile;
     } catch (err) {
-      console.error("Error fetching user profile:", err);
+      console.error("Error pada pemeriksaan dokumen users/{uid}:", err);
       return null;
     }
   };
@@ -124,7 +119,7 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        await fetchUserProfile(currentUser);
+        await ensureUserProfile(currentUser);
       } else {
         setProfile(null);
       }
@@ -144,7 +139,6 @@ export function AuthProvider({ children }) {
       );
       const newUser = userCredential.user;
 
-      // Update displayName di Firebase Auth
       if (nama && nama.trim()) {
         try {
           await updateProfile(newUser, { displayName: nama.trim() });
@@ -153,23 +147,11 @@ export function AuthProvider({ children }) {
         }
       }
 
-      // Simpan data profil ke koleksi users di Firestore
-      const userDocRef = doc(db, "users", newUser.uid);
-      const newProfile = {
-        nama: nama ? nama.trim() : "Siswa Baru",
-        email: newUser.email,
-        role: "siswa",
-        aktif: true,
-        noHp: "",
-        noHpOrangTua: "",
-        createdAt: new Date().toISOString(),
-      };
-
-      await setDoc(userDocRef, newProfile);
-      setProfile({ id: newUser.uid, ...newProfile });
+      // Cek dan buat dokumen users/{uid} (tanpa kata sandi)
+      const userProfile = await ensureUserProfile(newUser, nama);
       setUser(newUser);
 
-      return { user: newUser, profile: { id: newUser.uid, ...newProfile } };
+      return { user: newUser, profile: userProfile };
     } catch (err) {
       throw new Error(getFriendlyAuthErrorMessage(err));
     }
@@ -184,13 +166,16 @@ export function AuthProvider({ children }) {
         password
       );
       const loggedInUser = userCredential.user;
-      const userProfile = await fetchUserProfile(loggedInUser);
+
+      // Cek dokumen users/{uid}. Bila belum ada buat, bila sudah ada jangan diubah
+      const userProfile = await ensureUserProfile(loggedInUser);
 
       if (userProfile && userProfile.aktif === false) {
         await signOut(auth);
         throw new Error("Akun Anda dinonaktifkan oleh administrator. Hubungi staf Langkah Juara.");
       }
 
+      setUser(loggedInUser);
       return { user: loggedInUser, profile: userProfile };
     } catch (err) {
       throw new Error(getFriendlyAuthErrorMessage(err));
@@ -202,13 +187,16 @@ export function AuthProvider({ children }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const googleUser = result.user;
-      const userProfile = await fetchUserProfile(googleUser);
+
+      // Cek dokumen users/{uid}. Bila belum ada buat, bila sudah ada jangan diubah
+      const userProfile = await ensureUserProfile(googleUser);
 
       if (userProfile && userProfile.aktif === false) {
         await signOut(auth);
         throw new Error("Akun Anda dinonaktifkan oleh administrator. Hubungi staf Langkah Juara.");
       }
 
+      setUser(googleUser);
       return { user: googleUser, profile: userProfile };
     } catch (err) {
       throw new Error(getFriendlyAuthErrorMessage(err));
@@ -226,10 +214,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Muat ulang profil dari Firestore
+  // Muat ulang profil dari Firestore users/{uid}
   const refreshProfile = async () => {
     if (auth.currentUser) {
-      return await fetchUserProfile(auth.currentUser);
+      return await ensureUserProfile(auth.currentUser);
     }
     return null;
   };

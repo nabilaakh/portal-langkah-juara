@@ -112,6 +112,10 @@ export default function ProfilPage() {
         noHpOrangTua: formData.noHpOrangTua.trim(),
       });
 
+      if (refreshProfile) {
+        await refreshProfile();
+      }
+
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err) {

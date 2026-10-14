@@ -2,12 +2,15 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Database, CheckCircle2, User, RefreshCw } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Database, CheckCircle2, User, RefreshCw, LogOut, LogIn } from "lucide-react";
 import { seedDatabase } from "@/lib/seedData";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Topbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, profile, logout } = useAuth();
   const [isSeeding, setIsSeeding] = useState(false);
   const [seedSuccess, setSeedSuccess] = useState(false);
 
@@ -86,19 +89,47 @@ export default function Topbar() {
           </span>
         </button>
 
-        {/* Profil Singkat */}
-        <Link
-          href="/profil"
-          className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-gray-100/70 border border-transparent hover:border-gray-200 transition-all text-xs font-medium text-textMain"
-        >
-          <div className="w-7 h-7 rounded-lg bg-juara-100 text-juara flex items-center justify-center font-bold text-xs">
-            <User className="w-4 h-4" />
+        {/* Profil Singkat & Status Auth */}
+        {user || profile ? (
+          <div className="flex items-center gap-1.5">
+            <Link
+              href="/profil"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-gray-100/70 border border-transparent hover:border-gray-200 transition-all text-xs font-medium text-textMain"
+              title="Buka profil"
+            >
+              <div className="w-7 h-7 rounded-lg bg-juara-100 text-juara flex items-center justify-center font-bold text-xs shrink-0">
+                <User className="w-4 h-4" />
+              </div>
+              <div className="hidden md:flex flex-col text-left leading-tight max-w-[130px]">
+                <span className="font-semibold text-textMain truncate">
+                  {profile?.nama || user?.displayName || user?.email?.split("@")[0] || "Pengguna"}
+                </span>
+                <span className="text-[10px] text-textMuted uppercase font-semibold">
+                  {profile?.role || "Siswa"}
+                </span>
+              </div>
+            </Link>
+
+            <button
+              onClick={async () => {
+                await logout();
+                router.push("/masuk");
+              }}
+              title="Keluar dari akun"
+              className="p-1.5 rounded-xl hover:bg-rose-50 text-textMuted hover:text-rose-600 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-          <div className="hidden md:flex flex-col text-left leading-tight">
-            <span className="font-semibold text-textMain">Raka Pratama</span>
-            <span className="text-[10px] text-textMuted">Siswa</span>
-          </div>
-        </Link>
+        ) : (
+          <Link
+            href="/masuk"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-juara hover:bg-juara-600 text-white font-semibold text-xs shadow-xs transition-colors"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>Masuk</span>
+          </Link>
+        )}
       </div>
     </header>
   );

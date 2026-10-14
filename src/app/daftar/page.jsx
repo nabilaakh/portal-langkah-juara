@@ -3,12 +3,13 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createUser } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/ui/Button";
-import { UserPlus, ArrowRight, ShieldCheck, Mail, Lock, User } from "lucide-react";
+import { UserPlus, ArrowRight, ShieldAlert, Mail, Lock, User } from "lucide-react";
 
 export default function DaftarPage() {
   const router = useRouter();
+  const { registerWithEmail, loginWithGoogle, user } = useAuth();
   const [formData, setFormData] = useState({
     nama: "",
     email: "",
@@ -36,41 +37,26 @@ export default function DaftarPage() {
 
     try {
       setIsLoading(true);
-      const uid = "user-" + Date.now();
-      await createUser(uid, {
-        nama: formData.nama.trim(),
-        email: formData.email.trim(),
-        role: "siswa",
-        aktif: true,
-        noHp: "",
-        noHpOrangTua: "",
-      });
-
+      await registerWithEmail(formData.email, formData.password, formData.nama);
       // Bawa siswa ke /beranda sesuai PRD 4.1
       router.push("/beranda");
     } catch (err) {
       console.error(err);
-      setError("Gagal membuat akun: " + err.message);
+      setError(err.message || "Gagal membuat akun.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    setError("");
     try {
       setIsLoading(true);
-      const uid = "google-user-" + Date.now();
-      await createUser(uid, {
-        nama: "Pengguna Google Baru",
-        email: `siswa-${Date.now()}@gmail.com`,
-        role: "siswa",
-        aktif: true,
-        noHp: "",
-        noHpOrangTua: "",
-      });
+      await loginWithGoogle();
       router.push("/beranda");
     } catch (err) {
-      setError("Masuk dengan Google gagal: " + err.message);
+      console.error(err);
+      setError(err.message || "Masuk dengan Google gagal.");
     } finally {
       setIsLoading(false);
     }

@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { getUserById, updateUser, getUsers } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/ui/Button";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
-import { User, Phone, Mail, Shield, CheckCircle2, AlertCircle } from "lucide-react";
+import { User, Phone, Mail, Shield, CheckCircle2, AlertCircle, LogOut } from "lucide-react";
 
 export default function ProfilPage() {
+  const { user: authUser, profile: contextProfile, logout, refreshProfile } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loadingState, setLoadingState] = useState("loading"); // 'loading' | 'success' | 'error'
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,11 +27,21 @@ export default function ProfilPage() {
     try {
       setLoadingState("loading");
       setErrorMessage("");
-      // Ambil default user Raka (siswa) atau user pertama dari Firestore
-      let user = await getUserById("siswa-raka");
+
+      let user = null;
+      if (contextProfile) {
+        user = contextProfile;
+      } else if (authUser?.uid) {
+        user = await getUserById(authUser.uid);
+      }
+
       if (!user) {
-        const users = await getUsers();
-        user = users[0];
+        // Fallback default user Raka (siswa) atau user pertama dari Firestore
+        user = await getUserById("siswa-raka");
+        if (!user) {
+          const users = await getUsers();
+          user = users[0];
+        }
       }
 
       if (user) {

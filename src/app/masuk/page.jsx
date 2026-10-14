@@ -3,57 +3,96 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { getUsers } from "@/lib/firestoreService";
 import Button from "@/components/ui/Button";
 import { LogIn, ArrowRight, Mail, Lock, ShieldAlert, Sparkles } from "lucide-react";
 
 export default function MasukPage() {
   const router = useRouter();
+  const { loginWithEmail, loginWithGoogle, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (targetEmail) => {
-    setError("");
-    const loginEmail = targetEmail || email;
+  // Helper untuk navigasi berdasarkan peran
+  const redirectByRole = (role) => {
+    if (role === "staf") {
+      router.push("/staf");
+    } else if (role === "tutor") {
+      router.push("/tutor");
+    } else if (role === "super_admin") {
+      router.push("/admin");
+    } else {
+      router.push("/beranda");
+    }
+  };
 
-    if (!loginEmail.trim()) {
+  // Masuk dengan Email & Kata Sandi Firebase Auth
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!email.trim()) {
       setError("Email wajib diisi.");
+      return;
+    }
+    if (!password) {
+      setError("Kata sandi wajib diisi.");
       return;
     }
 
     try {
       setIsLoading(true);
+      const res = await loginWithEmail(email, password);
+      const role = res.profile?.role || "siswa";
+      redirectByRole(role);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Gagal masuk. Periksa kembali email dan kata sandi Anda.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Masuk dengan Google Firebase Auth
+  const handleGoogleSignIn = async () => {
+    setError("");
+    try {
+      setIsLoading(true);
+      const res = await loginWithGoogle();
+      const role = res.profile?.role || "siswa";
+      redirectByRole(role);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Masuk dengan Google gagal.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Masuk Cepat Demo (untuk kemudahan pengujian peran yang sudah di-seed)
+  const handleQuickDemoLogin = async (targetEmail) => {
+    setError("");
+    try {
+      setIsLoading(true);
       const allUsers = await getUsers();
-      const user = allUsers.find(
-        (u) => u.email?.toLowerCase() === loginEmail.trim().toLowerCase()
+      const matched = allUsers.find(
+        (u) => u.email?.toLowerCase() === targetEmail.toLowerCase()
       );
 
-      if (!user) {
-        // Fallback default ke beranda siswa jika akun baru
-        router.push("/beranda");
-        return;
-      }
-
-      if (user.aktif === false) {
-        setError("Akun Anda dinonaktifkan. Hubungi staf Langkah Juara.");
-        return;
-      }
-
-      // Arahkan sesuai peran di PRD 4.1
-      if (user.role === "staf") {
-        router.push("/staf");
-      } else if (user.role === "tutor") {
-        router.push("/tutor");
-      } else if (user.role === "super_admin") {
-        router.push("/admin");
+      if (matched) {
+        if (matched.aktif === false) {
+          setError("Akun ini dinonaktifkan.");
+          return;
+        }
+        redirectByRole(matched.role);
       } else {
         router.push("/beranda");
       }
     } catch (err) {
-      console.error(err);
-      setError("Gagal masuk: " + err.message);
+      setError("Gagal masuk cepat: " + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -89,9 +128,9 @@ export default function MasukPage() {
         {/* Tombol Masuk dengan Google Sesuai PRD Bab 4.1 */}
         <button
           type="button"
-          onClick={() => handleLogin("raka@siswa.id")}
+          onClick={handleGoogleSignIn}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-textMain font-medium text-sm transition-all shadow-2xs mb-5"
+          className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-textMain font-medium text-sm transition-all shadow-2xs mb-5 cursor-pointer"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
@@ -121,13 +160,7 @@ export default function MasukPage() {
           </span>
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleLogin();
-          }}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-textMain mb-1.5">
               Email Pengguna
@@ -177,12 +210,8 @@ export default function MasukPage() {
               <button
                 key={ql.email}
                 type="button"
-                onClick={() => {
-                  setEmail(ql.email);
-                  setPassword("demo123");
-                  handleLogin(ql.email);
-                }}
-                className="p-2 rounded-xl bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-juara/40 text-left transition-all"
+                onClick={() => handleQuickDemoLogin(ql.email)}
+                className="p-2 rounded-xl bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-juara/40 text-left transition-all cursor-pointer"
               >
                 <div className="text-xs font-bold text-textMain truncate">{ql.label}</div>
                 <div className="text-[10px] text-textMuted truncate">{ql.email}</div>

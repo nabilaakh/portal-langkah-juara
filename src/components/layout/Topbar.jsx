@@ -41,7 +41,7 @@ export default function Topbar() {
             {getPageTitle(pathname)}
           </h1>
           <p className="text-[11px] text-textMuted hidden sm:block">
-            Portal Belajar Langkah Juara Makassar
+            Portal Belajar Langkah Juara
           </p>
         </div>
       </div>
@@ -64,23 +64,22 @@ export default function Topbar() {
                 </span>
                 <div className="flex items-center gap-1 mt-0.5">
                   <span
-                    className={`inline-block px-1.5 py-0.2 rounded-md text-[10px] font-bold border uppercase tracking-wider ${
-                      profile?.role === "super_admin"
-                        ? "bg-rose-50 text-rose-700 border-rose-200"
-                        : profile?.role === "tutor"
+                    className={`inline-block px-1.5 py-0.2 rounded-md text-[10px] font-bold border uppercase tracking-wider ${profile?.role === "super_admin"
+                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                      : profile?.role === "tutor"
                         ? "bg-purple-50 text-purple-700 border-purple-200"
                         : profile?.role === "staf"
-                        ? "bg-blue-50 text-blue-700 border-blue-200"
-                        : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    }`}
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      }`}
                   >
                     {profile?.role === "super_admin"
                       ? "Super Admin"
                       : profile?.role === "tutor"
-                      ? "Tutor"
-                      : profile?.role === "staf"
-                      ? "Staf"
-                      : "Siswa"}
+                        ? "Tutor"
+                        : profile?.role === "staf"
+                          ? "Staf"
+                          : "Siswa"}
                   </span>
                 </div>
               </div>
@@ -99,9 +98,6 @@ export default function Topbar() {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline-block px-2 py-1 rounded-lg bg-gray-100 text-textMuted text-[11px] font-medium border border-gray-200">
-              Tamu
-            </span>
             <Link
               href="/masuk"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-juara hover:bg-juara-600 text-white font-semibold text-xs shadow-xs transition-colors"

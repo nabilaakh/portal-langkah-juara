@@ -31,17 +31,7 @@ export default function Sidebar() {
 
   // Buat menu terproteksi yang disesuaikan secara dinamis dengan peran pengguna
   const getMenuGroups = () => {
-    if (!user) {
-      return [
-        {
-          group: "Autentikasi",
-          items: [
-            { label: "Halaman Masuk", href: "/masuk", icon: LogIn },
-            { label: "Daftar Siswa Baru", href: "/daftar", icon: UserPlus },
-          ],
-        },
-      ];
-    }
+    if (!user) return [];
 
     const groups = [];
 
@@ -93,19 +83,21 @@ export default function Sidebar() {
       });
     }
 
-    // Menu Akun Pengguna
-    groups.push({
-      group: "Akun",
-      items: [{ label: "Profil Pengguna", href: "/profil", icon: User }],
-    });
-
     return groups;
   };
 
   const menuGroups = getMenuGroups();
 
   const isActive = (href) => {
-    if (href === "/beranda") return pathname === "/" || pathname === "/beranda";
+    const exactRoutes = ["/beranda", "/staf", "/admin", "/tutor"];
+
+    if (exactRoutes.includes(href)) {
+      if (href === "/beranda") {
+        return pathname === "/" || pathname === "/beranda";
+      }
+      return pathname === href;
+    }
+
     return pathname === href || pathname?.startsWith(href + "/");
   };
 
@@ -132,9 +124,8 @@ export default function Sidebar() {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-panel border-r border-gray-200/80 flex flex-col transition-transform duration-200 ease-in-out ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-panel border-r border-gray-200/80 flex flex-col transition-transform duration-200 ease-in-out ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
       >
         {/* Brand Header */}
         <div className="h-16 px-5 flex items-center gap-3 border-b border-gray-100 bg-white shrink-0">
@@ -167,16 +158,14 @@ export default function Sidebar() {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                        active
-                          ? "bg-juara-50 text-juara border border-juara/20 shadow-xs"
-                          : "text-textMuted hover:text-textMain hover:bg-gray-50"
-                      }`}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${active
+                        ? "bg-juara-50 text-juara border border-juara/20 shadow-xs"
+                        : "text-textMuted hover:text-textMain hover:bg-gray-50"
+                        }`}
                     >
                       <Icon
-                        className={`w-4 h-4 shrink-0 transition-colors ${
-                          active ? "text-juara" : "text-textMuted"
-                        }`}
+                        className={`w-4 h-4 shrink-0 transition-colors ${active ? "text-juara" : "text-textMuted"
+                          }`}
                       />
                       <span className="truncate">{item.label}</span>
                     </Link>

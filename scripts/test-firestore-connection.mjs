@@ -1,4 +1,15 @@
 import assert from 'assert';
+import fs from 'fs';
+
+if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID && fs.existsSync('.env.local')) {
+  const envContent = fs.readFileSync('.env.local', 'utf8');
+  envContent.split(/\r?\n/).forEach(line => {
+    const match = line.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      process.env[match[1].trim()] = match[2].trim();
+    }
+  });
+}
 
 console.log('Testing Task 2: Firestore services and seed data logic...');
 

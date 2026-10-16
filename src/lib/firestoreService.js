@@ -9,6 +9,7 @@ import {
   query,
   where,
   serverTimestamp,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase.js";
 
@@ -56,6 +57,39 @@ export function calculateTaskStatus(tugas, pengumpulan) {
   }
 
   return "Belum dikumpulkan";
+}
+
+/**
+ * Helper Universal Parsing & Formatting Tanggal / Timestamp Firestore
+ */
+export function parseDate(val) {
+  if (!val) return null;
+  if (typeof val.toDate === "function") return val.toDate();
+  if (val instanceof Date) return val;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+export function formatDate(val) {
+  const d = parseDate(val);
+  if (!d) return "-";
+  return d.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function formatDateTime(val) {
+  const d = parseDate(val);
+  if (!d) return "-";
+  return d.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 /* ==================== USERS ==================== */
@@ -239,8 +273,20 @@ export async function getTugasById(id) {
 
 export async function createTugas(data) {
   const ref = collection(db, COLLECTIONS.TUGAS);
-  const docRef = await addDoc(ref, data);
-  return { id: docRef.id, ...data };
+  let batasWaktu = data.batasWaktu;
+  if (batasWaktu) {
+    if (typeof batasWaktu === "string") {
+      batasWaktu = Timestamp.fromDate(new Date(batasWaktu));
+    } else if (batasWaktu instanceof Date) {
+      batasWaktu = Timestamp.fromDate(batasWaktu);
+    }
+  }
+  const payload = {
+    ...data,
+    ...(batasWaktu && { batasWaktu }),
+  };
+  const docRef = await addDoc(ref, payload);
+  return { id: docRef.id, ...payload };
 }
 
 /* ==================== PENGUMPULAN ==================== */

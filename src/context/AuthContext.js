@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
 
 const AuthContext = createContext({
@@ -102,7 +102,7 @@ export function AuthProvider({ children }) {
         aktif: true,
         noHp: "",
         noHpOrangTua: "",
-        createdAt: new Date().toISOString(),
+        dibuatPada: serverTimestamp(),
       };
 
       await setDoc(userDocRef, newProfileData);

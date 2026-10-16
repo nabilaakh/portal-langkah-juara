@@ -35,15 +35,6 @@ export default function ProfilPage() {
         user = await getUserById(authUser.uid);
       }
 
-      if (!user) {
-        // Fallback default user Raka (siswa) atau user pertama dari Firestore
-        user = await getUserById("siswa-raka");
-        if (!user) {
-          const users = await getUsers();
-          user = users[0];
-        }
-      }
-
       if (user) {
         setProfile(user);
         setFormData({
@@ -52,6 +43,8 @@ export default function ProfilPage() {
           noHpOrangTua: user.noHpOrangTua || "",
         });
         setLoadingState("success");
+      } else if (!authUser) {
+        setLoadingState("loading");
       } else {
         setLoadingState("empty");
       }
@@ -63,8 +56,10 @@ export default function ProfilPage() {
   };
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    if (authUser || contextProfile) {
+      loadProfile();
+    }
+  }, [authUser, contextProfile]);
 
   const validatePhone = (phone) => {
     if (!phone) return true; // Boleh kosong menurut Bab 7.1

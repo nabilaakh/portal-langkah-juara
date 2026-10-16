@@ -10,7 +10,9 @@ import {
   getUserById,
   getPengumpulanBySiswa,
   calculateTaskStatus,
+  formatDateTime,
 } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
 import {
@@ -28,7 +30,8 @@ import {
 export default function RincianKelasSiswaPage() {
   const params = useParams();
   const kelasId = params.id;
-  const currentSiswaId = "siswa-raka";
+  const { user } = useAuth();
+  const currentSiswaId = user?.uid;
 
   const [kelas, setKelas] = useState(null);
   const [tutor, setTutor] = useState(null);
@@ -60,10 +63,12 @@ export default function RincianKelasSiswaPage() {
       setTutor(tut);
       setPertemuanList(perts);
 
-      // Hitung status untuk setiap tugas
+      // Hitung status untuk setiap tugas jika siswa ID tersedia
       const tasksWithStatus = [];
       for (const t of tasks) {
-        const pengumpulan = await getPengumpulanBySiswa(t.id, currentSiswaId);
+        const pengumpulan = currentSiswaId
+          ? await getPengumpulanBySiswa(t.id, currentSiswaId)
+          : null;
         const status = calculateTaskStatus(t, pengumpulan);
         tasksWithStatus.push({
           ...t,
@@ -84,7 +89,7 @@ export default function RincianKelasSiswaPage() {
     if (kelasId) {
       loadData();
     }
-  }, [kelasId]);
+  }, [kelasId, currentSiswaId]);
 
   return (
     <div className="space-y-6">
@@ -254,16 +259,7 @@ export default function RincianKelasSiswaPage() {
                         </p>
                         <div className="flex items-center justify-between text-[11px] font-mono text-textMuted border-t border-gray-200/60 pt-2">
                           <span className="tabular-nums">
-                            Batas:{" "}
-                            {tugas.batasWaktu
-                              ? new Date(tugas.batasWaktu).toLocaleDateString("id-ID", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "-"}
+                            Batas: {formatDateTime(tugas.batasWaktu)}
                           </span>
                           <span className="font-sans font-bold text-juara flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
                             Kumpulkan <ChevronRight className="w-3.5 h-3.5" />

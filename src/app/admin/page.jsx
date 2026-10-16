@@ -9,6 +9,7 @@ import {
 } from "@/lib/firestoreService";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import {
   Shield,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 
 export default function DasborAdminPage() {
+  const { user, profile } = useAuth();
   const [metrics, setMetrics] = useState({
     siswaAktif: 0,
     pendaftaranBulanIni: 0,
@@ -55,9 +57,16 @@ export default function DasborAdminPage() {
       const now = new Date();
       const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
       const pendsThisMonth = allPends.filter((p) => {
-        if (!p.dibuatPada) return true;
-        const dStr = typeof p.dibuatPada === "string" ? p.dibuatPada : p.dibuatPada.toDate?.()?.toISOString() || "";
-        return dStr.startsWith(currentYearMonth) || true;
+        if (!p.dibuatPada) return false;
+        let dStr = "";
+        if (typeof p.dibuatPada.toDate === "function") {
+          dStr = p.dibuatPada.toDate().toISOString();
+        } else if (typeof p.dibuatPada === "string") {
+          dStr = p.dibuatPada;
+        } else if (p.dibuatPada instanceof Date) {
+          dStr = p.dibuatPada.toISOString();
+        }
+        return dStr.startsWith(currentYearMonth);
       });
 
       // 3. Rata-rata kehadiran (PRD 4.14: persentase kehadiran semua pertemuan)
@@ -68,14 +77,14 @@ export default function DasborAdminPage() {
       perts.forEach((pert) => {
         const hadirCount = Array.isArray(pert.hadirIds) ? pert.hadirIds.length : 0;
         const parentKelas = allKelas.find((k) => k.id === pert.kelasId);
-        const enrolledCount = Array.isArray(parentKelas?.siswaIds) ? parentKelas.siswaIds.length : 1;
+        const enrolledCount = Array.isArray(parentKelas?.siswaIds) ? parentKelas.siswaIds.length : 0;
 
         totalAttended += hadirCount;
         totalPossible += Math.max(enrolledCount, 1);
       });
 
       const avgAttendance =
-        totalPossible > 0 ? Math.round((totalAttended / totalPossible) * 100) : 85;
+        totalPossible > 0 ? Math.round((totalAttended / totalPossible) * 100) : 0;
 
       setMetrics({
         siswaAktif: siswaAktifCount,
@@ -103,7 +112,9 @@ export default function DasborAdminPage() {
           <span className="inline-block px-2.5 py-0.5 rounded-full bg-orange-50 text-juara font-bold text-xs mb-1.5 border border-orange-100">
             Dasbor Pemilik Bimbel
           </span>
-          <h2 className="text-xl font-extrabold text-textMain">Selamat Datang, Pak Arif</h2>
+          <h2 className="text-xl font-extrabold text-textMain">
+            Selamat Datang, {profile?.nama || user?.displayName || "Super Admin"}
+          </h2>
           <p className="text-xs text-textMuted mt-0.5">
             Ringkasan operasional bimbingan belajar, pertumbuhan siswa, dan statistik kehadiran tatap muka.
           </p>

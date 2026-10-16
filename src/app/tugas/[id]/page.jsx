@@ -8,7 +8,10 @@ import {
   getPengumpulanBySiswa,
   submitJawaban,
   calculateTaskStatus,
+  parseDate,
+  formatDateTime,
 } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
 import Button from "@/components/ui/Button";
@@ -27,7 +30,8 @@ import {
 export default function DetailTugasSiswaPage() {
   const params = useParams();
   const tugasId = params.id;
-  const currentSiswaId = "siswa-raka";
+  const { user } = useAuth();
+  const currentSiswaId = user?.uid;
 
   const [tugas, setTugas] = useState(null);
   const [pengumpulan, setPengumpulan] = useState(null);
@@ -52,7 +56,9 @@ export default function DetailTugasSiswaPage() {
       }
       setTugas(t);
 
-      const p = await getPengumpulanBySiswa(tugasId, currentSiswaId);
+      const p = currentSiswaId
+        ? await getPengumpulanBySiswa(tugasId, currentSiswaId)
+        : null;
       setPengumpulan(p);
       if (p && p.tautan) {
         setTautanInput(p.tautan);
@@ -73,12 +79,17 @@ export default function DetailTugasSiswaPage() {
     if (tugasId) {
       loadData();
     }
-  }, [tugasId]);
+  }, [tugasId, currentSiswaId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setActionError("");
     setSuccessMsg("");
+
+    if (!currentSiswaId) {
+      setActionError("Sesi login tidak terdeteksi. Silakan masuk kembali.");
+      return;
+    }
 
     const url = tautanInput.trim();
     // Validasi PRD Bab 4.5: tautan wajib diawali https://
@@ -89,7 +100,7 @@ export default function DetailTugasSiswaPage() {
 
     // Validasi batas waktu jika belum dikumpulkan sama sekali
     const now = new Date();
-    const deadline = tugas.batasWaktu ? new Date(tugas.batasWaktu) : null;
+    const deadline = parseDate(tugas.batasWaktu);
     if (deadline && now > deadline && !pengumpulan) {
       setActionError("Batas waktu pengumpulan telah lewat.");
       return;
@@ -156,15 +167,7 @@ export default function DetailTugasSiswaPage() {
                 <span>
                   Batas Waktu Pengumpulan:{" "}
                   <strong className="text-textMain tabular-nums">
-                    {tugas.batasWaktu
-                      ? new Date(tugas.batasWaktu).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }) + " WITA"
-                      : "-"}
+                    {formatDateTime(tugas.batasWaktu)} WITA
                   </strong>
                 </span>
               </div>

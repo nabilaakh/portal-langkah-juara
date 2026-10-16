@@ -59,7 +59,7 @@ export default function KelolaKelasStafPage() {
         getUsers(),
       ]);
 
-      const tuts = allUsers.filter((u) => u.role === "tutor");
+      const tuts = allUsers.filter((u) => u.role === "tutor" || u.role === "super_admin");
       setTutors(tuts);
       setPrograms(allProgs);
 

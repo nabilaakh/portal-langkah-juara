@@ -2,14 +2,23 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { getKelas, getTugas, getPengumpulanBySiswa, calculateTaskStatus } from "@/lib/firestoreService";
+import {
+  getKelas,
+  getTugas,
+  getPengumpulanBySiswa,
+  calculateTaskStatus,
+  parseDate,
+  formatDateTime,
+} from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
 import Button from "@/components/ui/Button";
 import { Calendar, Clock, MapPin, CheckCircle, BookOpen, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function BerandaPage() {
-  const currentSiswaId = "siswa-raka"; // Default siswa Raka
+  const { user, profile } = useAuth();
+  const currentSiswaId = user?.uid;
 
   const [kelasList, setKelasList] = useState([]);
   const [tugasBelumList, setTugasBelumList] = useState([]);
@@ -17,15 +26,24 @@ export default function BerandaPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadBerandaData = async () => {
+    if (!currentSiswaId) {
+      setLoadingState("loading");
+      return;
+    }
+
     try {
       setLoadingState("loading");
       setErrorMessage("");
 
       const allKelas = await getKelas();
       // Filter kelas yang memuat uid siswa di siswaIds (PRD 4.2)
-      const myKelas = allKelas.filter(
-        (k) => Array.isArray(k.siswaIds) && k.siswaIds.includes(currentSiswaId)
-      );
+      // Jika super_admin melihat beranda, tampilkan semua kelas untuk pemantauan
+      const isSuperAdmin = profile?.role === "super_admin";
+      const myKelas = isSuperAdmin
+        ? allKelas
+        : allKelas.filter(
+            (k) => Array.isArray(k.siswaIds) && k.siswaIds.includes(currentSiswaId)
+          );
       setKelasList(myKelas);
 
       // Ambil tugas dari setiap kelas siswa
@@ -47,8 +65,8 @@ export default function BerandaPage() {
 
       // Urutkan dari batas waktu terdekat (PRD 4.2)
       unsubmittedTasks.sort((a, b) => {
-        const da = new Date(a.batasWaktu || 0).getTime();
-        const db = new Date(b.batasWaktu || 0).getTime();
+        const da = parseDate(a.batasWaktu)?.getTime() || 0;
+        const db = parseDate(b.batasWaktu)?.getTime() || 0;
         return da - db;
       });
 
@@ -62,8 +80,10 @@ export default function BerandaPage() {
   };
 
   useEffect(() => {
-    loadBerandaData();
-  }, []);
+    if (currentSiswaId) {
+      loadBerandaData();
+    }
+  }, [currentSiswaId, profile?.role]);
 
   const nextClass = kelasList.length > 0 ? kelasList[0] : null;
 
@@ -75,7 +95,9 @@ export default function BerandaPage() {
           <span className="inline-block px-2.5 py-1 rounded-full bg-white/20 text-white text-xs font-semibold mb-2">
             Selamat Datang, Siswa Langkah Juara!
           </span>
-          <h2 className="text-2xl font-extrabold tracking-tight">Raka Pratama</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight">
+            {profile?.nama || user?.displayName || user?.email?.split("@")[0] || "Siswa"}
+          </h2>
           <p className="text-white/80 text-xs sm:text-sm mt-1 max-w-lg leading-relaxed">
             Pantau jadwal tatap muka kelas, buka materi belajar, dan kumpulkan tugas tepat waktu untuk hasil maksimal.
           </p>
@@ -203,18 +225,7 @@ export default function BerandaPage() {
                         </div>
                         <div className="mt-2 text-[11px] text-textMuted flex items-center gap-1.5 font-mono tabular-nums">
                           <Clock className="w-3.5 h-3.5 text-rose-500" />
-                          <span>
-                            Batas:{" "}
-                            {tugas.batasWaktu
-                              ? new Date(tugas.batasWaktu).toLocaleDateString("id-ID", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "-"}
-                          </span>
+                          <span>Batas: {formatDateTime(tugas.batasWaktu)}</span>
                         </div>
                       </Link>
                     ))}

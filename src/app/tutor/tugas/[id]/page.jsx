@@ -109,6 +109,23 @@ export default function TugasDanNilaiTutorPage() {
     }
   }, [tugasId]);
 
+  const formatDateTime = (val) => {
+    if (!val) return "-";
+    let d = null;
+    if (typeof val.toDate === "function") {
+      d = val.toDate();
+    } else {
+      d = new Date(val);
+    }
+    if (!d || isNaN(d.getTime())) return "-";
+    return d.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const openGradeModal = (sub) => {
     setSelectedSub(sub);
     setNilaiInput(sub.nilai !== null ? String(sub.nilai) : "");
@@ -185,15 +202,7 @@ export default function TugasDanNilaiTutorPage() {
                   <span>
                     Batas Pengumpulan:{" "}
                     <strong className="text-textMain tabular-nums">
-                      {tugas.batasWaktu
-                        ? new Date(tugas.batasWaktu).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "-"}
+                      {formatDateTime(tugas.batasWaktu)}
                     </strong>
                   </span>
                 </div>
@@ -256,14 +265,7 @@ export default function TugasDanNilaiTutorPage() {
                             <BadgeStatus status={sub.status} />
                           </td>
                           <td className="py-3.5 px-4 text-textMuted font-mono tabular-nums">
-                            {sub.dikumpulkanPada
-                              ? new Date(sub.dikumpulkanPada).toLocaleDateString("id-ID", {
-                                  day: "numeric",
-                                  month: "short",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "-"}
+                            {formatDateTime(sub.dikumpulkanPada)}
                           </td>
                           <td className="py-3.5 px-4">
                             {sub.tautan ? (

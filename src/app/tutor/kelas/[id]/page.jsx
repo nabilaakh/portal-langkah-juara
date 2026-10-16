@@ -11,6 +11,7 @@ import {
   createPertemuan,
   updatePresensi,
   createTugas,
+  formatDateTime,
 } from "@/lib/firestoreService";
 import StateHandler from "@/components/ui/StateHandler";
 import Button from "@/components/ui/Button";
@@ -212,7 +213,7 @@ export default function KelasYangDiajarTutorPage() {
         kelasId,
         judul: tugasData.judul.trim(),
         deskripsi: tugasData.deskripsi.trim(),
-        batasWaktu: new Date(tugasData.batasWaktu).toISOString(),
+        batasWaktu: new Date(tugasData.batasWaktu),
       });
 
       setIsTugasModalOpen(false);
@@ -542,16 +543,7 @@ export default function KelasYangDiajarTutorPage() {
                             {tugas.deskripsi}
                           </p>
                           <div className="text-[11px] text-textMuted font-mono tabular-nums mt-1">
-                            Batas Waktu:{" "}
-                            {tugas.batasWaktu
-                              ? new Date(tugas.batasWaktu).toLocaleDateString("id-ID", {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "-"}
+                            Batas Waktu: {formatDateTime(tugas.batasWaktu)}
                           </div>
                         </div>
 

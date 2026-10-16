@@ -24,8 +24,10 @@ function LaporanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Pilihan bulan tersimpan di alamat URL query param (PRD 4.17)
-  const queryMonth = searchParams.get("bulan") || "2026-10";
+  // Pilihan bulan dinamis sesuai tanggal berjalan (PRD 4.17)
+  const now = new Date();
+  const defaultYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const queryMonth = searchParams.get("bulan") || defaultYm;
   const [selectedBulan, setSelectedBulan] = useState(queryMonth);
 
   const [siswaPerProgram, setSiswaPerProgram] = useState([]);
@@ -141,12 +143,19 @@ function LaporanContent() {
     router.push(`/admin/laporan?bulan=${val}`);
   };
 
-  const monthOptions = [
-    { value: "2026-10", label: "Oktober 2026" },
-    { value: "2026-09", label: "September 2026" },
-    { value: "2026-08", label: "Agustus 2026" },
-    { value: "2026-11", label: "November 2026" },
-  ];
+  const getDynamicMonthOptions = () => {
+    const list = [];
+    const base = new Date();
+    for (let i = -3; i <= 2; i++) {
+      const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
+      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+      list.push({ value: val, label });
+    }
+    return list;
+  };
+
+  const monthOptions = getDynamicMonthOptions();
 
   return (
     <div className="space-y-8">

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { getPendaftaran, getKelas, getUsers } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import {
   ClipboardList,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 
 export default function DasborStafPage() {
+  const { user, profile } = useAuth();
   const [pendaftaranMenunggu, setPendaftaranMenunggu] = useState(0);
   const [kelasHariIni, setKelasHariIni] = useState([]);
   const [loadingState, setLoadingState] = useState("loading");
@@ -42,7 +44,7 @@ export default function DasborStafPage() {
       const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       const todayName = days[new Date().getDay()];
 
-      // Filter kelas hari ini (atau tampilkan kelas aktif)
+      // Filter kelas hari ini dari data kelas aktif Firestore
       const todayClasses = allKelas
         .filter((k) => k.hari?.toLowerCase() === todayName.toLowerCase())
         .map((k) => ({
@@ -50,16 +52,7 @@ export default function DasborStafPage() {
           tutorNama: tutorMap[k.tutorId] || k.tutorId || "Tutor",
         }));
 
-      // Jika hari ini tidak ada jadwal, tampilkan kelas pertama sebagai demo agar penguji melihat data
-      const displayClasses =
-        todayClasses.length > 0
-          ? todayClasses
-          : allKelas.slice(0, 2).map((k) => ({
-              ...k,
-              tutorNama: tutorMap[k.tutorId] || k.tutorId || "Tutor",
-            }));
-
-      setKelasHariIni(displayClasses);
+      setKelasHariIni(todayClasses);
       setLoadingState("success");
     } catch (err) {
       console.error(err);
@@ -80,7 +73,9 @@ export default function DasborStafPage() {
           <span className="inline-block px-2.5 py-0.5 rounded-full bg-orange-50 text-juara font-bold text-xs mb-1.5 border border-orange-100">
             Dasbor Administrasi Bimbel
           </span>
-          <h2 className="text-xl font-extrabold text-textMain">Selamat Pagi, Kak Fira</h2>
+          <h2 className="text-xl font-extrabold text-textMain">
+            Selamat Datang, {profile?.nama || user?.displayName || "Staf Langkah Juara"}
+          </h2>
           <p className="text-xs text-textMuted mt-0.5">
             Periksa pendaftaran baru siswa dan koordinasikan jadwal kelas bimbingan belajar hari ini.
           </p>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { getKelas, getPrograms } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
 import {
@@ -16,7 +17,8 @@ import {
 } from "lucide-react";
 
 export default function DasborTutorPage() {
-  const currentTutorId = "tutor-dimas"; // Default Kak Dimas (Tutor UTBK)
+  const { user, profile } = useAuth();
+  const currentTutorId = user?.uid;
 
   const [allKelasSaya, setAllKelasSaya] = useState([]);
   const [kelasHariIni, setKelasHariIni] = useState([]);
@@ -25,6 +27,11 @@ export default function DasborTutorPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadData = async () => {
+    if (!currentTutorId) {
+      setLoadingState("loading");
+      return;
+    }
+
     try {
       setLoadingState("loading");
       setErrorMessage("");
@@ -41,12 +48,14 @@ export default function DasborTutorPage() {
       setProgramsMap(pMap);
 
       // Filter hanya kelas yang diajar oleh tutor yang masuk (PRD 4.11: tutorId === uid tutor)
-      const myClasses = allKelas.filter(
-        (k) => k.tutorId === currentTutorId || k.tutorId === "tutor-nadia"
-      );
+      // Jika super_admin, dapat melihat seluruh kelas
+      const isSuperAdmin = profile?.role === "super_admin";
+      const myClasses = isSuperAdmin
+        ? allKelas
+        : allKelas.filter((k) => k.tutorId === currentTutorId);
       setAllKelasSaya(myClasses);
 
-      // Filter kelas hari ini (atau tampilkan kelas pertama untuk demo)
+      // Filter kelas hari ini
       const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       const todayName = days[new Date().getDay()];
 
@@ -54,7 +63,7 @@ export default function DasborTutorPage() {
         (k) => k.hari?.toLowerCase() === todayName.toLowerCase()
       );
 
-      setKelasHariIni(todayClasses.length > 0 ? todayClasses : myClasses.slice(0, 1));
+      setKelasHariIni(todayClasses);
       setLoadingState("success");
     } catch (err) {
       console.error(err);
@@ -64,8 +73,10 @@ export default function DasborTutorPage() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentTutorId) {
+      loadData();
+    }
+  }, [currentTutorId, profile?.role]);
 
   return (
     <div className="space-y-6">
@@ -75,7 +86,9 @@ export default function DasborTutorPage() {
           <span className="inline-block px-2.5 py-0.5 rounded-full bg-orange-50 text-juara font-bold text-xs mb-1.5 border border-orange-100">
             Dasbor Pengajar Tutor
           </span>
-          <h2 className="text-xl font-extrabold text-textMain">Selamat Datang, Kak Dimas</h2>
+          <h2 className="text-xl font-extrabold text-textMain">
+            Selamat Datang, {profile?.nama || user?.displayName || "Tutor Langkah Juara"}
+          </h2>
           <p className="text-xs text-textMuted mt-0.5">
             Kelola pertemuan, catat presensi kehadiran siswa, dan periksa penugasan belajar di kelas Anda.
           </p>

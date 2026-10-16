@@ -6,13 +6,15 @@ import {
   getPendaftaranBySiswa,
   createPendaftaran,
 } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
 import Button from "@/components/ui/Button";
 import { BookOpen, Calendar, CheckCircle2, AlertCircle, ArrowRight, Tag } from "lucide-react";
 
 export default function ProgramPage() {
-  const currentSiswaId = "siswa-raka"; // Default siswa aktif (Raka)
+  const { user } = useAuth();
+  const currentSiswaId = user?.uid;
 
   const [programs, setPrograms] = useState([]);
   const [pendaftaranList, setPendaftaranList] = useState([]);
@@ -23,6 +25,11 @@ export default function ProgramPage() {
   const [actionError, setActionError] = useState("");
 
   const loadData = async () => {
+    if (!currentSiswaId) {
+      setLoadingState("loading");
+      return;
+    }
+
     try {
       setLoadingState("loading");
       setErrorMessage("");
@@ -43,8 +50,10 @@ export default function ProgramPage() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentSiswaId) {
+      loadData();
+    }
+  }, [currentSiswaId]);
 
   const handleAjukan = async (program) => {
     setActionError("");

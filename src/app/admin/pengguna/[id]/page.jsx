@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { getUserById, updateUser } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import Button from "@/components/ui/Button";
 import BadgeStatus from "@/components/ui/BadgeStatus";
@@ -22,6 +23,7 @@ export default function DetailPenggunaAdminPage() {
   const params = useParams();
   const userId = params.id;
   const router = useRouter();
+  const { user: authUser } = useAuth();
 
   const [user, setUser] = useState(null);
   const [selectedRole, setSelectedRole] = useState("siswa");
@@ -67,7 +69,8 @@ export default function DetailPenggunaAdminPage() {
     setSaveSuccessMsg("");
 
     // Validasi PRD Bab 4.15: Super Admin tidak bisa menurunkan peran atau menonaktifkan akunnya sendiri
-    if (user.id === "admin-arif" && (selectedRole !== "super_admin" || !isAktif)) {
+    const isSelf = user.id === authUser?.uid;
+    if (isSelf && (selectedRole !== "super_admin" || !isAktif)) {
       setValidationError(
         "Super Admin tidak bisa menurunkan peran atau menonaktifkan akunnya sendiri."
       );

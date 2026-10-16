@@ -7,6 +7,7 @@ import {
   updatePendaftaranStatus,
   getUsers,
   getPrograms,
+  formatDate,
 } from "@/lib/firestoreService";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
@@ -142,6 +143,22 @@ function PendaftaranContent() {
     }
   };
 
+  const formatDate = (val) => {
+    if (!val) return "-";
+    let d = null;
+    if (typeof val.toDate === "function") {
+      d = val.toDate();
+    } else {
+      d = new Date(val);
+    }
+    if (!d || isNaN(d.getTime())) return "-";
+    return d.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   const tabs = [
     { key: "semua", label: "Semua" },
     { key: "menunggu", label: "Menunggu" },
@@ -215,9 +232,7 @@ function PendaftaranContent() {
                       {programsMap[item.programId] || item.programId}
                     </td>
                     <td className="py-3 px-4 text-textMuted font-mono tabular-nums">
-                      {item.dibuatPada
-                        ? new Date(item.dibuatPada).toLocaleDateString("id-ID")
-                        : "-"}
+                      {formatDate(item.dibuatPada)}
                     </td>
                     <td className="py-3 px-4">
                       <BadgeStatus status={item.status} />

@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { getKelas, getUsers } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
 import { Calendar, Clock, MapPin, User, ArrowRight, BookOpen } from "lucide-react";
 
 export default function KelasSayaPage() {
-  const currentSiswaId = "siswa-raka";
+  const { user, profile } = useAuth();
+  const currentSiswaId = user?.uid;
 
   const [kelasList, setKelasList] = useState([]);
   const [tutorMap, setTutorMap] = useState({});
@@ -16,6 +18,11 @@ export default function KelasSayaPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadData = async () => {
+    if (!currentSiswaId) {
+      setLoadingState("loading");
+      return;
+    }
+
     try {
       setLoadingState("loading");
       setErrorMessage("");
@@ -32,9 +39,12 @@ export default function KelasSayaPage() {
       setTutorMap(tutors);
 
       // Filter kelas yang memuat uid siswa di siswaIds (PRD 4.4)
-      const myKelas = allKelas.filter(
-        (k) => Array.isArray(k.siswaIds) && k.siswaIds.includes(currentSiswaId)
-      );
+      const isSuperAdmin = profile?.role === "super_admin";
+      const myKelas = isSuperAdmin
+        ? allKelas
+        : allKelas.filter(
+          (k) => Array.isArray(k.siswaIds) && k.siswaIds.includes(currentSiswaId)
+        );
 
       setKelasList(myKelas);
       setLoadingState(myKelas.length === 0 ? "empty" : "success");
@@ -46,8 +56,10 @@ export default function KelasSayaPage() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (currentSiswaId) {
+      loadData();
+    }
+  }, [currentSiswaId, profile?.role]);
 
   return (
     <div className="space-y-6">
@@ -63,7 +75,7 @@ export default function KelasSayaPage() {
         errorMessage={errorMessage}
         onRetry={loadData}
         emptyTitle="Belum Terdaftar di Kelas"
-        emptyMessage="Anda belum dimasukkan ke dalam kelas apa pun oleh staf Langkah Juara."
+        emptyMessage="Anda belum memiliki kelas di Langkah Juara."
         emptyAction={
           <Link
             href="/program"

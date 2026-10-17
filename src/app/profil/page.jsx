@@ -187,7 +187,7 @@ export default function ProfilPage() {
               {/* Email (Read Only PRD 4.6) */}
               <div>
                 <label className="block text-xs font-semibold text-textMain mb-1.5">
-                  Email Akun (Tidak dapat diubah)
+                  Email Akun 
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-textMuted absolute left-3 top-3" />
@@ -198,9 +198,6 @@ export default function ProfilPage() {
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-textMuted text-sm cursor-not-allowed"
                   />
                 </div>
-                <p className="text-[11px] text-textMuted mt-1">
-                  Sesuai PRD Bab 4.6, email akun tidak dapat diubah dari halaman profil.
-                </p>
               </div>
 
               {/* Nomor HP */}
@@ -218,9 +215,6 @@ export default function ProfilPage() {
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tabular-nums focus:outline-none focus:border-juara focus:ring-1 focus:ring-juara/30"
                   />
                 </div>
-                <p className="text-[11px] text-textMuted mt-1">
-                  Hanya angka, 10 sampai 13 digit, diawali <strong>08</strong>.
-                </p>
               </div>
 
               {/* Nomor HP Orang Tua (Khusus Siswa PRD 4.6) */}
@@ -261,9 +255,6 @@ export default function ProfilPage() {
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-textMuted text-sm font-semibold cursor-not-allowed"
                   />
                 </div>
-                <p className="text-[11px] text-textMuted mt-1">
-                  Peran hanya dapat diubah oleh Super Admin melalui menu Kelola Pengguna.
-                </p>
               </div>
 
               <div className="pt-3">

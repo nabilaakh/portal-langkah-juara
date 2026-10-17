@@ -31,14 +31,22 @@ export default function StateHandler({
   }
 
   if (state === "error") {
+    const isAksesDitolak = errorMessage === "Akses Ditolak" || errorMessage?.toLowerCase()?.includes("akses ditolak");
+    const isNotFound = errorMessage === "Kelas tidak ditemukan" || errorMessage === "Tugas tidak ditemukan";
+    const title = isAksesDitolak
+      ? "Akses Ditolak"
+      : isNotFound
+      ? errorMessage
+      : "Gagal Memuat Data";
+
     return (
       <div className="w-full py-12 px-4 rounded-2xl bg-white border border-rose-100 flex flex-col items-center justify-center text-center shadow-sm">
         <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-4">
           <AlertCircle className="w-7 h-7" />
         </div>
-        <h3 className="text-base font-bold text-textMain mb-1">Gagal Memuat Data</h3>
+        <h3 className="text-base font-bold text-textMain mb-1">{title}</h3>
         <p className="text-sm text-textMuted max-w-sm mb-5 leading-relaxed">{errorMessage}</p>
-        {onRetry && (
+        {onRetry && !isAksesDitolak && (
           <button
             onClick={onRetry}
             className="inline-flex items-center gap-2 px-4 py-2 bg-juara hover:bg-juara-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"

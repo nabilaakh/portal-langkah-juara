@@ -30,7 +30,7 @@ import {
 export default function RincianKelasSiswaPage() {
   const params = useParams();
   const kelasId = params.id;
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const currentSiswaId = user?.uid;
 
   const [kelas, setKelas] = useState(null);
@@ -47,6 +47,14 @@ export default function RincianKelasSiswaPage() {
 
       const k = await getKelasById(kelasId);
       if (!k) {
+        setLoadingState("error");
+        setErrorMessage("Kelas tidak ditemukan");
+        return;
+      }
+
+      // Validasi PRD Bab 4.4 & Bab 8: Siswa hanya dapat membuka kelas yang diikutinya
+      const isSiswa = profile?.role === "siswa";
+      if (isSiswa && (!Array.isArray(k.siswaIds) || !k.siswaIds.includes(currentSiswaId))) {
         setLoadingState("error");
         setErrorMessage("Kelas tidak ditemukan");
         return;

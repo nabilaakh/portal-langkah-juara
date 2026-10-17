@@ -13,6 +13,7 @@ import {
   createTugas,
   formatDateTime,
 } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -36,6 +37,7 @@ import {
 export default function KelasYangDiajarTutorPage() {
   const params = useParams();
   const kelasId = params.id;
+  const { user, profile } = useAuth();
 
   const [kelas, setKelas] = useState(null);
   const [siswaList, setSiswaList] = useState([]);
@@ -82,6 +84,15 @@ export default function KelasYangDiajarTutorPage() {
         setErrorMessage("Kelas tidak ditemukan");
         return;
       }
+
+      // Validasi PRD Bab 4.12 & Bab 8: Bila tutor membuka kelas yang diajar tutor lain, tampil Akses Ditolak
+      const isTutor = profile?.role === "tutor";
+      if (isTutor && k.tutorId !== user?.uid) {
+        setLoadingState("error");
+        setErrorMessage("Akses Ditolak");
+        return;
+      }
+
       setKelas(k);
 
       const [allUsers, perts, tasks] = await Promise.all([

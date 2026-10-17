@@ -11,6 +11,7 @@ import {
   gradePengumpulan,
   calculateTaskStatus,
 } from "@/lib/firestoreService";
+import { useAuth } from "@/context/AuthContext";
 import StateHandler from "@/components/ui/StateHandler";
 import BadgeStatus from "@/components/ui/BadgeStatus";
 import Button from "@/components/ui/Button";
@@ -30,6 +31,7 @@ import {
 export default function TugasDanNilaiTutorPage() {
   const params = useParams();
   const tugasId = params.id;
+  const { user, profile } = useAuth();
 
   const [tugas, setTugas] = useState(null);
   const [kelas, setKelas] = useState(null);
@@ -65,6 +67,14 @@ export default function TugasDanNilaiTutorPage() {
         getPengumpulan(tugasId),
         getUsers(),
       ]);
+
+      // Validasi PRD Bab 4.12 & Bab 8: Bila tutor membuka tugas kelas tutor lain, tampil Akses Ditolak
+      const isTutor = profile?.role === "tutor";
+      if (isTutor && k && k.tutorId !== user?.uid) {
+        setLoadingState("error");
+        setErrorMessage("Akses Ditolak");
+        return;
+      }
 
       setKelas(k);
 

@@ -1,0 +1,98 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+    
+    function currentUserRole() {
+      return getUserData(request.auth.uid).role;
+    }
+    
+    function isSuperAdmin() {
+      return isSignedIn() && currentUserRole() == 'super_admin';
+    }
+
+    /* ==================== USERS ==================== */
+    // PRD Bab 2.3, 4.15, 6.2, dan Bab 8:
+    // - Pengguna dapat membaca daftar users saat login.
+    // - Super Admin bisa mengubah peran dan status akun pengguna lain.
+    // - SUPER ADMIN TIDAK BISA MENURUNKAN PERAN ATAU MENONAKTIFKAN AKUNNYA SENDIRI:
+    //   Jika request.auth.uid == userId, role harus tetap 'super_admin' dan aktif tidak boleh false.
+    // - Pengguna biasa (siswa/staf/tutor) hanya dapat memperbarui data profilnya (nama, noHp, noHpOrtu),
+    //   TIDAK BISA mengubah peran (role) maupun status aktifnya sendiri.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      
+      // Pembuatan profil awal saat registrasi
+      allow create: if isUser(userId) || isSuperAdmin();
+      
+      // Validasi mutasi profil (PRD Subbab 4.15 & 6.2)
+      allow update: if (
+        isSuperAdmin() && (
+          // Bila mengedit akun orang lain: bebas
+          request.auth.uid != userId || (
+            // Bila mengedit akun sendiri: tidak boleh menurunkan peran dan tidak boleh nonaktif
+            request.resource.data.role == 'super_admin' &&
+            request.resource.data.aktif != false
+          )
+        )
+      ) || (
+        // Bila pengguna biasa mengupdate profilnya sendiri
+        isUser(userId) &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.aktif == resource.data.aktif
+      );
+      
+      // Super admin tidak boleh menghapus akunnya sendiri
+      allow delete: if isSuperAdmin() && request.auth.uid != userId;
+    }
+    
+    /* ==================== PENDAFTARAN ==================== */
+    match /pendaftaran/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin() || currentUserRole() == 'staf';
+    }
+    
+    /* ==================== KELAS ==================== */
+    match /kelas/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin() || currentUserRole() == 'staf' || currentUserRole() == 'tutor';
+    }
+
+    /* ==================== PROGRAM ==================== */
+    match /program/{id} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    /* ==================== TUGAS ==================== */
+    match /tugas/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin() || currentUserRole() == 'tutor';
+    }
+
+    /* ==================== PENGUMPULAN TUGAS ==================== */
+    match /pengumpulan/{id} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+    }
+
+    /* ==================== PERTEMUAN ==================== */
+    match /pertemuan/{id} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin() || currentUserRole() == 'tutor';
+    }
+  }
+}

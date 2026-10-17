@@ -11,7 +11,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "./firebase.js";
+import { db, auth } from "./firebase.js";
 
 export const COLLECTIONS = {
   USERS: "users",
@@ -117,6 +117,22 @@ export async function createUser(id, data) {
 }
 
 export async function updateUser(id, data) {
+  // Validasi Backend / Action (PRD Subbab 4.15 & 6.2):
+  // Super Admin tidak bisa menurunkan peran atau menonaktifkan akunnya sendiri.
+  const currentUid = auth.currentUser?.uid;
+  if (currentUid && currentUid === id) {
+    if (data.role !== undefined && data.role !== "super_admin") {
+      throw new Error(
+        "Super Admin tidak bisa menurunkan peran akunnya sendiri demi keamanan sistem."
+      );
+    }
+    if (data.aktif !== undefined && data.aktif === false) {
+      throw new Error(
+        "Super Admin tidak bisa menonaktifkan akunnya sendiri demi keamanan sistem."
+      );
+    }
+  }
+
   const userRef = doc(db, COLLECTIONS.USERS, id);
   await updateDoc(userRef, data);
   return { id, ...data };

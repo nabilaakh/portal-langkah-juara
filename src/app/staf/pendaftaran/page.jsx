@@ -76,6 +76,11 @@ function PendaftaranContent() {
   };
 
   useEffect(() => {
+    const statusFromUrl = searchParams.get("status") || "semua";
+    setActiveTab(statusFromUrl);
+  }, [searchParams]);
+
+  useEffect(() => {
     loadData();
   }, [activeTab]);
 

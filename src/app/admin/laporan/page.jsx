@@ -27,8 +27,29 @@ function LaporanContent() {
   // Pilihan bulan dinamis sesuai tanggal berjalan (PRD 4.17)
   const now = new Date();
   const defaultYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const queryMonth = searchParams.get("bulan") || defaultYm;
-  const [selectedBulan, setSelectedBulan] = useState(queryMonth);
+
+  const resolveBulanParam = (param) => {
+    if (!param) return defaultYm;
+    const p = param.toLowerCase().trim();
+    if (/^\d{4}-\d{2}$/.test(p)) return p;
+    const monthNames = [
+      "januari", "februari", "maret", "april", "mei", "juni",
+      "juli", "agustus", "september", "oktober", "november", "desember"
+    ];
+    const mIdx = monthNames.indexOf(p);
+    if (mIdx !== -1) {
+      const year = now.getFullYear();
+      return `${year}-${String(mIdx + 1).padStart(2, "0")}`;
+    }
+    return defaultYm;
+  };
+
+  const [selectedBulan, setSelectedBulan] = useState(resolveBulanParam(searchParams.get("bulan")));
+
+  useEffect(() => {
+    const b = resolveBulanParam(searchParams.get("bulan"));
+    setSelectedBulan(b);
+  }, [searchParams]);
 
   const [siswaPerProgram, setSiswaPerProgram] = useState([]);
   const [kehadiranPerKelas, setKehadiranPerKelas] = useState([]);

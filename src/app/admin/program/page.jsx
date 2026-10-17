@@ -197,11 +197,10 @@ export default function ProgramAdminPage() {
                     <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={() => handleToggleAktif(prog)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold transition-all border ${
-                          prog.aktif
-                            ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
-                            : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold transition-all border ${prog.aktif
+                          ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                          }`}
                         title="Program yang dipakai kelas tidak dihapus, cukup dimatikan status aktifnya (PRD 4.16)"
                       >
                         {prog.aktif ? (
@@ -295,7 +294,7 @@ export default function ProgramAdminPage() {
             <input
               type="number"
               min={1}
-              step={10000}
+              step="any"
               placeholder="800000"
               value={formData.harga}
               onChange={(e) => setFormData({ ...formData, harga: e.target.value })}
